@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/__viktor_auth/:path*",
+      "destination": "https://quaint-lynx-503.convex.site/__viktor_auth/:path*?space_origin=https%3A%2F%2Fpreview-redvote-app-a455a1b7.viktor.space"
+    },
+    {
+      "source": "/((?!assets/|__viktor_meta\\.json).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
