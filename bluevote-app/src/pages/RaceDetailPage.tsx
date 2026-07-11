@@ -83,7 +83,7 @@ export function RaceDetailPage() {
         <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
           <h2 className="text-lg font-semibold text-white mb-4">Public Pulse -- Live Voter Sentiment</h2>
           <div className="flex rounded-full overflow-hidden h-8 mb-4">
-            {race.pulse.map((p, i) => (
+            {race.pulse.map((p) => (
               <div
                 key={p.candidateId}
                 className={`flex items-center justify-center text-xs font-bold text-white ${

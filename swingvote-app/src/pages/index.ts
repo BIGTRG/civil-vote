@@ -13,3 +13,6 @@ export { ComparePage } from "./ComparePage";
 export { PartyDirectoryPage } from "./PartyDirectoryPage";
 export { PrivacyPolicyPage } from "./PrivacyPolicyPage";
 export { TermsOfServicePage } from "./TermsOfServicePage";
+export { NewsPage } from "./NewsPage";
+export { AnalyticsPage } from "./AnalyticsPage";
+export { CandidatePortalPage } from "./CandidatePortalPage";

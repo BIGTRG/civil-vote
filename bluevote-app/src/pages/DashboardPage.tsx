@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export function DashboardPage() {
   const races = useQuery(api.races.list, {});
-  const pledgeStats = useQuery(api.pledges.stats);
+  
   const myPledges = useQuery(api.pledges.myPledges);
   const activity = useQuery(api.activity.recent);
   const promiseStats = useQuery(api.promises.stats);
