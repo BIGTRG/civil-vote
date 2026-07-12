@@ -22,3 +22,6 @@ export { CanvassingPage } from "./CanvassingPage";
 export { PaymentsPage } from "./PaymentsPage";
 export { NotificationsPage } from "./NotificationsPage";
 export { ApiDocsPage } from "./ApiDocsPage";
+export { VolunteerPage } from "./VolunteerPage";
+export { ComparePage } from "./ComparePage";
+export { CommunityPage } from "./CommunityPage";

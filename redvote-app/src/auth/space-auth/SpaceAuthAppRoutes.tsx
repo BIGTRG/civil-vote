@@ -61,6 +61,9 @@ export function SpaceAuthAppRoutes() {
           <Route path="/maps" element={<MapsPage />} />
           <Route path="/canvassing" element={<CanvassingPage />} />
           <Route path="/api-docs" element={<ApiDocsPage />} />
+            <Route path="/community" element={<CommunityPage />} />
+            <Route path="/compare" element={<ComparePage />} />
+            <Route path="/volunteers" element={<VolunteerPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 
