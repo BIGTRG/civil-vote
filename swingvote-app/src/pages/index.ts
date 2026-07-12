@@ -9,7 +9,6 @@ export { PromiseLedgerPage } from "./PromiseLedgerPage";
 export { WinMyVotePage } from "./WinMyVotePage";
 export { FundingPage } from "./FundingPage";
 export { StorePage } from "./StorePage";
-export { ComparePage } from "./ComparePage";
 export { PartyDirectoryPage } from "./PartyDirectoryPage";
 export { PrivacyPolicyPage } from "./PrivacyPolicyPage";
 export { TermsOfServicePage } from "./TermsOfServicePage";
@@ -17,3 +16,9 @@ export { NewsPage } from "./NewsPage";
 export { AnalyticsPage } from "./AnalyticsPage";
 export { CandidatePortalPage } from "./CandidatePortalPage";
 export { PollingPage } from "./PollingPage";
+export { MapsPage } from "./MapsPage";
+export { CanvassingPage } from "./CanvassingPage";
+
+export { PaymentsPage } from "./PaymentsPage";
+export { NotificationsPage } from "./NotificationsPage";
+export { ApiDocsPage } from "./ApiDocsPage";

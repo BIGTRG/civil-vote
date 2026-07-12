@@ -1,5 +1,4 @@
 export { DashboardPage } from "./DashboardPage";
-export { LandingPage } from "./LandingPage";
 export { LoginPage } from "./LoginPage";
 export { SettingsPage } from "./SettingsPage";
 export { SignupPage } from "./SignupPage";
@@ -17,3 +16,9 @@ export { NewsPage } from "./NewsPage";
 export { AnalyticsPage } from "./AnalyticsPage";
 export { CandidatePortalPage } from "./CandidatePortalPage";
 export { PollingPage } from "./PollingPage";
+export { MapsPage } from "./MapsPage";
+export { CanvassingPage } from "./CanvassingPage";
+
+export { PaymentsPage } from "./PaymentsPage";
+export { NotificationsPage } from "./NotificationsPage";
+export { ApiDocsPage } from "./ApiDocsPage";

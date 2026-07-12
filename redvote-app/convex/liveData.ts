@@ -130,3 +130,17 @@ export const addPollingData = mutation({
     });
   },
 });
+
+export const getRatings = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("raceRatings").collect();
+  },
+});
+
+export const getLatestPolls = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("pollingData").order("desc").take(50);
+  },
+});

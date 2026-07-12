@@ -139,4 +139,70 @@ http.route({
   }),
 });
 
+
+// ========== PUBLIC API v1 ENDPOINTS ==========
+
+// GET /api/v1/races - List all races
+http.route({
+  path: "/api/v1/races",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const state = url.searchParams.get("state");
+    const races = await ctx.runQuery(api.races.list, {});
+    const filtered = state ? races.filter((r: any) => r.state === state) : races;
+    return new Response(JSON.stringify({ races: filtered, total: filtered.length }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+// GET /api/v1/polling - Latest polling data
+http.route({
+  path: "/api/v1/polling",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const polls = await ctx.runQuery(api.liveData.getLatestPolls, {});
+    return new Response(JSON.stringify({ polls: polls || [] }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+// GET /api/v1/ratings - Race ratings
+http.route({
+  path: "/api/v1/ratings",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const ratings = await ctx.runQuery(api.liveData.getRatings, {});
+    return new Response(JSON.stringify({ ratings: ratings || [] }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+// GET /api/v1/news - Latest news
+http.route({
+  path: "/api/v1/news",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const news = await ctx.runQuery(api.news.getLatest, {});
+    return new Response(JSON.stringify({ articles: news || [] }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
+// GET /api/v1/canvassing/stats - Canvassing statistics
+http.route({
+  path: "/api/v1/canvassing/stats",
+  method: "GET",
+  handler: httpAction(async (ctx) => {
+    const stats = await ctx.runQuery(api.canvassing.getStats, {});
+    return new Response(JSON.stringify({ stats }), {
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }),
+});
+
 export default http;

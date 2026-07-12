@@ -23,6 +23,9 @@ import {
   AnalyticsPage,
   CandidatePortalPage,
   PollingPage,
+  MapsPage,
+  CanvassingPage,
+  PaymentsPage,
 } from "@/pages";
 import { PublicLandingPage } from "@/pages/PublicLandingPage";
 import { convex } from "../convexClient";
@@ -55,6 +58,10 @@ export function SpaceAuthAppRoutes() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/candidate-portal" element={<CandidatePortalPage />} />
           <Route path="/polling" element={<PollingPage />} />
+          <Route path="/maps" element={<MapsPage />} />
+          <Route path="/canvassing" element={<CanvassingPage />} />
+          <Route path="/api-docs" element={<ApiDocsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 
         {/* Auth-required pages */}
