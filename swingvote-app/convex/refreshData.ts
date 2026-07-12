@@ -328,3 +328,165 @@ export const bulkRefresh = mutation({
     };
   },
 });
+
+
+// Update candidate finance data from FEC
+export const updateFinance = mutation({
+  args: {
+    updates: v.array(v.object({
+      candidateName: v.string(),
+      totalRaised: v.number(),
+      totalSpent: v.optional(v.number()),
+      cashOnHand: v.optional(v.number()),
+      fecSource: v.optional(v.string()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    let updated = 0;
+    let notFound = 0;
+    const missing: string[] = [];
+
+    for (const update of args.updates) {
+      const candidates = await ctx.db.query("candidates").collect();
+      const match = candidates.find(c => c.name === update.candidateName);
+      if (match) {
+        await ctx.db.patch(match._id, {
+          totalRaised: update.totalRaised,
+        });
+        updated++;
+      } else {
+        notFound++;
+        missing.push(update.candidateName);
+      }
+    }
+
+    return { updated, notFound, missing };
+  },
+});
+
+
+// Update candidate finance data from FEC -- enhanced with spent/COH
+export const updateFinanceV2 = mutation({
+  args: {
+    updates: v.array(v.object({
+      candidateName: v.string(),
+      totalRaised: v.number(),
+      totalSpent: v.optional(v.number()),
+      cashOnHand: v.optional(v.number()),
+      fecCandidateId: v.optional(v.string()),
+      fecSource: v.optional(v.string()),
+    })),
+  },
+  handler: async (ctx, args) => {
+    let updated = 0;
+    let notFound = 0;
+    const missing: string[] = [];
+
+    for (const update of args.updates) {
+      const candidates = await ctx.db.query("candidates").collect();
+      const match = candidates.find(c => c.name === update.candidateName);
+      if (match) {
+        const patch: Record<string, any> = {
+          totalRaised: update.totalRaised,
+        };
+        if (update.totalSpent !== undefined) patch.totalSpent = update.totalSpent;
+        if (update.cashOnHand !== undefined) patch.cashOnHand = update.cashOnHand;
+        if (update.fecCandidateId !== undefined) patch.fecCandidateId = update.fecCandidateId;
+        await ctx.db.patch(match._id, patch);
+        updated++;
+      } else {
+        notFound++;
+        missing.push(update.candidateName);
+      }
+    }
+
+    return { updated, notFound, missing };
+  },
+});
+
+// Add polling data for a race
+export const addPollingData = mutation({
+  args: {
+    raceTitle: v.string(),
+    pollster: v.string(),
+    date: v.string(),
+    sampleSize: v.optional(v.number()),
+    margin: v.optional(v.string()),
+    results: v.array(v.object({
+      candidateName: v.string(),
+      party: v.string(),
+      percentage: v.number(),
+    })),
+    source: v.optional(v.string()),
+    url: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const races = await ctx.db.query("races").collect();
+    const race = races.find(r => r.title === args.raceTitle);
+    if (!race) return { action: "error", message: `Race not found: ${args.raceTitle}` };
+
+    // Check for duplicate poll
+    const existing = await ctx.db.query("pollingData")
+      .withIndex("by_race", q => q.eq("raceId", race._id))
+      .collect();
+    const dup = existing.find(p => p.pollster === args.pollster && p.date === args.date);
+    if (dup) {
+      await ctx.db.patch(dup._id, {
+        results: args.results,
+        sampleSize: args.sampleSize,
+        margin: args.margin,
+        source: args.source,
+        url: args.url,
+      });
+      return { action: "updated" };
+    }
+
+    await ctx.db.insert("pollingData", {
+      raceId: race._id,
+      pollster: args.pollster,
+      date: args.date,
+      sampleSize: args.sampleSize,
+      margin: args.margin,
+      results: args.results,
+      source: args.source,
+      url: args.url,
+    });
+    return { action: "inserted" };
+  },
+});
+
+// Upsert race rating
+export const upsertRaceRating = mutation({
+  args: {
+    raceTitle: v.string(),
+    state: v.string(),
+    office: v.string(),
+    rating: v.string(),
+    source: v.string(),
+    previousRating: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.query("raceRatings")
+      .withIndex("by_state", q => q.eq("state", args.state))
+      .collect();
+    const match = existing.find(r => r.raceTitle === args.raceTitle && r.source === args.source);
+
+    const data = {
+      raceTitle: args.raceTitle,
+      state: args.state,
+      office: args.office,
+      rating: args.rating,
+      source: args.source,
+      previousRating: args.previousRating,
+      lastUpdated: new Date().toISOString(),
+    };
+
+    if (match) {
+      await ctx.db.patch(match._id, { ...data, previousRating: match.rating });
+      return { action: "updated" };
+    }
+    await ctx.db.insert("raceRatings", data);
+    return { action: "inserted" };
+  },
+});
+

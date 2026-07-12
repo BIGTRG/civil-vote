@@ -23,6 +23,7 @@ import {
   NewsPage,
   AnalyticsPage,
   CandidatePortalPage,
+  PollingPage,
 } from "@/pages";
 import { PublicLandingPage } from "@/pages/PublicLandingPage";
 import { convex } from "../convexClient";
@@ -55,6 +56,7 @@ export function SpaceAuthAppRoutes() {
           <Route path="/news" element={<NewsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/candidate-portal" element={<CandidatePortalPage />} />
+          <Route path="/polling" element={<PollingPage />} />
         </Route>
 
         {/* Auth-required pages */}

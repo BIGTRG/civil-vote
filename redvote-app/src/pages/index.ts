@@ -15,3 +15,4 @@ export { TermsOfServicePage } from "./TermsOfServicePage";
 export { NewsPage } from "./NewsPage";
 export { AnalyticsPage } from "./AnalyticsPage";
 export { CandidatePortalPage } from "./CandidatePortalPage";
+export { PollingPage } from "./PollingPage";

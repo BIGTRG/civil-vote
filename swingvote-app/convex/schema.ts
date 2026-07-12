@@ -36,6 +36,10 @@ const schema = defineSchema({
     website: v.optional(v.string()),
     pledgeCount: v.number(),
     totalRaised: v.number(),
+    totalSpent: v.optional(v.number()),
+    cashOnHand: v.optional(v.number()),
+    pollingAverage: v.optional(v.number()),
+    fecCandidateId: v.optional(v.string()),
   })
     .index("by_race", ["raceId"])
     .index("by_party", ["party"]),
@@ -173,6 +177,37 @@ const schema = defineSchema({
   })
     .index("by_session", ["sessionId"])
     .index("by_product", ["productId"]),
+
+  // Polling data snapshots
+  pollingData: defineTable({
+    raceId: v.id("races"),
+    pollster: v.string(),
+    date: v.string(),
+    sampleSize: v.optional(v.number()),
+    margin: v.optional(v.string()),
+    results: v.array(v.object({
+      candidateName: v.string(),
+      party: v.string(),
+      percentage: v.number(),
+    })),
+    source: v.optional(v.string()),
+    url: v.optional(v.string()),
+  })
+    .index("by_race", ["raceId"])
+    .index("by_date", ["date"]),
+
+  // Race ratings from Cook/Sabato/etc
+  raceRatings: defineTable({
+    raceTitle: v.string(),
+    state: v.string(),
+    office: v.string(),
+    rating: v.string(),
+    source: v.string(),
+    previousRating: v.optional(v.string()),
+    lastUpdated: v.string(),
+  })
+    .index("by_state", ["state"])
+    .index("by_rating", ["rating"]),
 });
 
 export default schema;
