@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageSquare, ThumbsUp, Share2, Users, TrendingUp, Clock, Bookmark, Flag } from "lucide-react";
+import { MessageSquare, ThumbsUp, Share2, Bookmark } from "lucide-react";
 
 interface Post {
   id: string;

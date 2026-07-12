@@ -12,3 +12,5 @@ export { IssuesPage } from "./IssuesPage";
 export { AnalyticsPage } from "./AnalyticsPage";
 export { FundingPage } from "./FundingPage";
 export { OperationsPage } from "./OperationsPage";
+export { WhiteLabelPage } from "./WhiteLabelPage";
+export { LoadTestPage } from "./LoadTestPage";

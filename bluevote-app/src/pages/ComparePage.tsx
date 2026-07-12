@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Scale, ChevronDown, X, DollarSign, Users, FileText, Star } from "lucide-react";
+import { Scale, X, Users } from "lucide-react";
 
 interface CandidateForComparison {
   _id: string;
@@ -93,12 +93,12 @@ const MOCK_POSITIONS: Record<string, Record<string, string>> = {
 };
 
 export function ComparePage() {
-  const candidates = useQuery(api.candidates.getAll, {});
+  const candidates = useQuery(api.candidates.list, {});
   const [selected, setSelected] = useState<string[]>([]);
   const [showPicker, setShowPicker] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const selectedCandidates = (candidates || []).filter(c => selected.includes(c._id));
+  const selectedCandidates = (candidates || []).filter((c: any) => selected.includes(c._id));
 
   const getPosition = (candidate: CandidateForComparison, issue: string) => {
     const partyKey = candidate.party === "Democrat" ? "D" : candidate.party === "Republican" ? "R" : "I";
@@ -136,11 +136,11 @@ export function ComparePage() {
                     </button>
                     <div className="flex items-center gap-3 mb-3">
                       <div className={"w-12 h-12 rounded-full flex items-center justify-center text-white font-bold " + partyColor(candidate.party)}>
-                        {candidate.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                        {candidate.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
                       </div>
                       <div>
                         <h3 className="font-semibold">{candidate.name}</h3>
-                        <p className="text-xs text-white/40">{candidate.party} -- {candidate.state}</p>
+                        <p className="text-xs text-white/40">{candidate.party} -- {candidate.raceState}</p>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-center text-xs">
@@ -171,10 +171,10 @@ export function ComparePage() {
                     </div>
                     <div className="overflow-y-auto max-h-56">
                       {(candidates || [])
-                        .filter(c => !selected.includes(c._id))
-                        .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.state?.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .filter((c: any) => !selected.includes(c._id))
+                        .filter((c: any) => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.state?.toLowerCase().includes(searchTerm.toLowerCase()))
                         .slice(0, 20)
-                        .map(c => (
+                        .map((c: any) => (
                           <button key={c._id} onClick={() => {
                             setSelected(s => [...s, c._id]);
                             setShowPicker(null);
@@ -186,7 +186,7 @@ export function ComparePage() {
                             </div>
                             <div>
                               <p className="text-sm font-medium">{c.name}</p>
-                              <p className="text-[10px] text-white/40">{c.party} -- {c.state}</p>
+                              <p className="text-[10px] text-white/40">{c.party} -- {c.raceState}</p>
                             </div>
                           </button>
                         ))}
@@ -210,7 +210,7 @@ export function ComparePage() {
                   <h3 className="font-semibold text-sm">{issue}</h3>
                 </div>
                 <div className={"grid gap-px bg-white/5 " + (selectedCandidates.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
-                  {selectedCandidates.map(c => (
+                  {selectedCandidates.map((c: any) => (
                     <div key={c._id} className="bg-[#0a1628] p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <div className={"w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white " + partyColor(c.party || "")}>

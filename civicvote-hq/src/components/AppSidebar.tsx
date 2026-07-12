@@ -14,6 +14,8 @@ import {
   DollarSign,
   Shield,
   Landmark,
+  Layers,
+  Zap,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -43,6 +45,8 @@ import {
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/operations", label: "Operations", icon: Shield },
+  { href: "/white-label", label: "White-Label", icon: Layers },
+  { href: "/load-testing", label: "Load Testing", icon: Zap },
 ];
 
 const manageNav = [

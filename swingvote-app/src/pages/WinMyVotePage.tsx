@@ -1,205 +1,235 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { useState } from "react";
+import type { Id } from "../../convex/_generated/dataModel";
 
-const CATEGORIES = ["Economy", "Healthcare", "Education", "Housing", "Infrastructure", "Environment", "Public Safety", "Immigration", "Labor", "Other"];
+const ISSUES = [
+  "Economy & Jobs", "Healthcare", "Education", "Climate & Environment",
+  "Immigration", "Criminal Justice", "Gun Policy", "Voting Rights",
+  "Housing", "Infrastructure", "Foreign Policy", "Social Security",
+];
+
+const STANCES: Record<string, string[]> = {
+  "Economy & Jobs": ["Tax cuts", "Raise minimum wage", "Job training programs", "Reduce regulations", "Expand unions"],
+  "Healthcare": ["Universal healthcare", "Expand ACA", "Free market approach", "Lower drug prices", "Mental health funding"],
+  "Education": ["Free public college", "School choice/vouchers", "Increase teacher pay", "Student debt relief", "STEM investment"],
+  "Climate & Environment": ["Green New Deal", "Carbon tax", "Nuclear energy", "Fossil fuel investment", "Paris Agreement"],
+  "Immigration": ["Path to citizenship", "Border security", "DACA protection", "Merit-based system", "Sanctuary cities"],
+  "Criminal Justice": ["Police reform", "End cash bail", "Mandatory minimums", "Community policing", "Drug decriminalization"],
+  "Gun Policy": ["Universal background checks", "Assault weapon ban", "Red flag laws", "Concealed carry", "Second Amendment"],
+  "Voting Rights": ["Automatic registration", "Voter ID laws", "Early voting expansion", "Mail-in voting", "Gerrymandering reform"],
+  "Housing": ["Affordable housing", "Rent control", "Zoning reform", "First-time buyer aid", "Homelessness solutions"],
+  "Infrastructure": ["Roads & bridges", "Public transit", "Broadband expansion", "Smart grid", "Water infrastructure"],
+  "Foreign Policy": ["Diplomacy first", "Strong military", "Trade agreements", "NATO support", "Foreign aid"],
+  "Social Security": ["Expand benefits", "Raise retirement age", "Privatize accounts", "Remove cap", "Preserve current"],
+};
+
+type Priority = { issue: string; importance: "critical" | "important" | "nice_to_have"; stance: string };
 
 export function WinMyVotePage() {
-  const issues = useQuery(api.voterIssues.list, {});
-  const createIssue = useMutation(api.voterIssues.create);
-  const upvoteIssue = useMutation(api.voterIssues.upvote);
-  const [showForm, setShowForm] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Economy");
-  const [state, setState] = useState("GA");
-  const [submitting, setSubmitting] = useState(false);
+  const races = useQuery(api.races.list, {});
+  const matchCandidates = useMutation(api.voterMatch.matchCandidates);
+  const [selectedRace, setSelectedRace] = useState<string>("");
+  const [priorities, setPriorities] = useState<Priority[]>([]);
+  const [currentIssue, setCurrentIssue] = useState("");
+  const [currentImportance, setCurrentImportance] = useState<"critical" | "important" | "nice_to_have">("important");
+  const [currentStance, setCurrentStance] = useState("");
+  const [results, setResults] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<"select" | "issues" | "results">("select");
 
-  const filtered = issues?.filter(i => !categoryFilter || i.category === categoryFilter) ?? [];
+  const addPriority = () => {
+    if (!currentIssue || !currentStance) return;
+    setPriorities([...priorities, { issue: currentIssue, importance: currentImportance, stance: currentStance }]);
+    setCurrentIssue("");
+    setCurrentStance("");
+  };
 
-  const handleSubmit = async () => {
-    if (!title.trim() || !description.trim()) return;
-    setSubmitting(true);
+  const removePriority = (idx: number) => {
+    setPriorities(priorities.filter((_, i) => i !== idx));
+  };
+
+  const runMatch = async () => {
+    if (!selectedRace || priorities.length === 0) return;
+    setLoading(true);
     try {
-      await createIssue({ title, description, category, state });
-      setShowForm(false);
-      setTitle("");
-      setDescription("");
+      const res = await matchCandidates({
+        raceId: selectedRace as Id<"races">,
+        priorities,
+        sessionId: `session_${Date.now()}`,
+      });
+      setResults(res);
+      setStep("results");
     } catch (e) {
       console.error(e);
     }
-    setSubmitting(false);
+    setLoading(false);
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Win My Vote</h1>
-          <p className="text-purple-300/60 mt-1">Tell candidates what matters to you. Two-way accountability.</p>
-        </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-5 py-2.5 bg-purple-500 hover:bg-purple-400 text-white text-sm font-medium rounded-lg transition-colors shrink-0"
-        >
-          Submit Issue
-        </button>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-white">Win My Vote</h1>
+        <p className="text-white/50 text-sm mt-1">AI-powered candidate matching based on your priorities</p>
       </div>
 
-      {/* Category filters */}
-      <div className="flex gap-2 flex-wrap">
-        <button
-          onClick={() => setCategoryFilter("")}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            !categoryFilter ? "bg-purple-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
-          }`}
-        >
-          All
-        </button>
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setCategoryFilter(cat)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              categoryFilter === cat ? "bg-purple-500 text-white" : "bg-white/5 text-white/60 hover:bg-white/10"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Progress steps */}
+      <div className="flex items-center gap-4">
+        {["Select Race", "Your Issues", "Results"].map((s, i) => {
+          const stepKey = ["select", "issues", "results"][i];
+          const isActive = step === stepKey;
+          const isDone = (step === "issues" && i === 0) || (step === "results" && i < 2);
+          return (
+            <div key={s} className="flex items-center gap-2">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium ${
+                isActive ? "bg-purple-500 text-white" : isDone ? "bg-purple-500/30 text-purple-400" : "bg-white/10 text-white/30"
+              }`}>
+                {isDone ? "\u2713" : i + 1}
+              </div>
+              <span className={`text-xs ${isActive ? "text-white" : "text-white/30"}`}>{s}</span>
+              {i < 2 && <div className="w-8 h-px bg-white/10" />}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Issues list */}
-      <div className="space-y-4">
-        {filtered.map((issue) => (
-          <div key={issue._id} className="p-6 rounded-2xl bg-white/5 border border-white/10">
-            <div className="flex gap-4">
-              {/* Upvote */}
+      {step === "select" && (
+        <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Choose a Race</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
+            {races?.map(race => (
               <button
-                onClick={() => upvoteIssue({ id: issue._id })}
-                className="flex flex-col items-center gap-1 shrink-0 group"
+                key={race._id}
+                onClick={() => { setSelectedRace(race._id); setStep("issues"); }}
+                className={`text-left p-4 rounded-lg border transition-colors ${
+                  selectedRace === race._id
+                    ? "border-purple-500 bg-purple-500/10"
+                    : "border-white/10 bg-white/5 hover:border-white/20"
+                }`}
               >
-                <svg className="w-6 h-6 text-purple-400/60 group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-                <span className="text-lg font-bold text-white">{issue.upvotes}</span>
+                <div className="text-white text-sm font-medium">{race.title}</div>
+                <div className="text-white/40 text-xs mt-1">{race.state}</div>
               </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    issue.status === "open" ? "bg-yellow-500/20 text-yellow-400" :
-                    issue.status === "acknowledged" ? "bg-purple-500/20 text-purple-400" :
-                    issue.status === "responded" ? "bg-green-500/20 text-green-400" :
-                    "bg-purple-500/20 text-purple-400"
-                  }`}>
-                    {issue.status.charAt(0).toUpperCase() + issue.status.slice(1)}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-white/60">
-                    {issue.category}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/15 text-purple-400">
-                    {issue.state}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-1">{issue.title}</h3>
-                <p className="text-purple-300/50 text-sm">{issue.description}</p>
+      {step === "issues" && (
+        <div className="space-y-4">
+          <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Add Your Priorities</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <select value={currentIssue} onChange={e => { setCurrentIssue(e.target.value); setCurrentStance(""); }}
+                className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white">
+                <option value="">Select issue...</option>
+                {ISSUES.map(i => <option key={i} value={i}>{i}</option>)}
+              </select>
+              <select value={currentStance} onChange={e => setCurrentStance(e.target.value)}
+                className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white" disabled={!currentIssue}>
+                <option value="">Select stance...</option>
+                {(STANCES[currentIssue] || []).map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <div className="flex gap-2">
+                <select value={currentImportance} onChange={e => setCurrentImportance(e.target.value as any)}
+                  className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white flex-1">
+                  <option value="critical">Critical</option>
+                  <option value="important">Important</option>
+                  <option value="nice_to_have">Nice to have</option>
+                </select>
+                <button onClick={addPriority} disabled={!currentIssue || !currentStance}
+                  className="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-30 hover:bg-purple-600">
+                  Add
+                </button>
+              </div>
+            </div>
 
-                {/* Responses */}
-                {issue.responses.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {issue.responses.map((r, i) => (
-                      <div key={i} className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                        <div className="text-xs text-green-400 mb-1">{r.candidateName} responded:</div>
-                        <div className="text-sm text-white/80">{r.response}</div>
+            {priorities.length > 0 && (
+              <div className="space-y-2">
+                {priorities.map((p, i) => (
+                  <div key={i} className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-2">
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                        p.importance === "critical" ? "bg-red-500/20 text-red-400" :
+                        p.importance === "important" ? "bg-yellow-500/20 text-yellow-400" :
+                        "bg-white/10 text-white/40"
+                      }`}>{p.importance}</span>
+                      <span className="text-white text-sm">{p.issue}</span>
+                      <span className="text-white/40 text-xs">{p.stance}</span>
+                    </div>
+                    <button onClick={() => removePriority(i)} className="text-white/30 hover:text-red-400 text-sm">X</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            <button onClick={() => setStep("select")} className="px-4 py-2 rounded-lg border border-white/20 text-white/60 text-sm">Back</button>
+            <button onClick={runMatch} disabled={priorities.length === 0 || loading}
+              className="bg-purple-500 text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-30 hover:bg-purple-600">
+              {loading ? "Matching..." : `Match Me (${priorities.length} priorities)`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === "results" && results && (
+        <div className="space-y-4">
+          <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Your Matches</h2>
+            <div className="space-y-4">
+              {results.map((r, i) => (
+                <div key={i} className="bg-white/5 rounded-xl border border-white/10 p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+                        r.party === "democrat" ? "bg-blue-600" : r.party === "republican" ? "bg-red-600" : "bg-purple-600"
+                      }`}>
+                        {r.candidateName.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-white font-medium">{r.candidateName}</div>
+                        <div className="text-white/40 text-xs">{r.party.charAt(0).toUpperCase() + r.party.slice(1)}</div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-2xl font-bold ${
+                        r.matchScore >= 70 ? "text-green-400" : r.matchScore >= 40 ? "text-yellow-400" : "text-red-400"
+                      }`}>
+                        {r.matchScore}%
+                      </div>
+                      <div className="text-white/30 text-xs">Match Score</div>
+                    </div>
+                  </div>
+                  <div className="w-full bg-white/10 rounded-full h-2 mb-3">
+                    <div className={`h-2 rounded-full ${
+                      r.matchScore >= 70 ? "bg-green-500" : r.matchScore >= 40 ? "bg-yellow-500" : "bg-red-500"
+                    }`} style={{ width: `${r.matchScore}%` }} />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {r.breakdown.map((b: any, j: number) => (
+                      <div key={j} className="flex items-center gap-2 text-xs">
+                        <span className={`w-2 h-2 rounded-full ${
+                          b.alignment === "strong_match" ? "bg-green-500" :
+                          b.alignment === "partial_match" ? "bg-yellow-500" : "bg-red-500"
+                        }`} />
+                        <span className="text-white/50">{b.issue}</span>
+                        <span className={`ml-auto ${
+                          b.alignment === "strong_match" ? "text-green-400" :
+                          b.alignment === "partial_match" ? "text-yellow-400" : "text-red-400"
+                        }`}>
+                          {b.alignment.replace("_", " ")}
+                        </span>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-
-        {filtered.length === 0 && (
-          <div className="text-center py-16 text-purple-300/40">
-            {issues === undefined ? "Loading issues..." : "No issues found. Be the first to submit one!"}
-          </div>
-        )}
-      </div>
-
-      {/* Submit form modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0f2140] border border-white/10 rounded-2xl p-8 max-w-lg w-full">
-            <h3 className="text-xl font-semibold text-white mb-2">Submit a Voter Issue</h3>
-            <p className="text-purple-300/50 text-sm mb-6">
-              What issue matters most to you? Candidates will see this.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-purple-300/60 mb-1">Issue Title</label>
-                <input
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder="e.g., Affordable childcare access"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-400/50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-purple-300/60 mb-1">Description</label>
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  rows={3}
-                  placeholder="Explain why this issue matters and what you want candidates to address..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-400/50 resize-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-purple-300/60 mb-1">Category</label>
-                  <select
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-400/50"
-                  >
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-purple-300/60 mb-1">State</label>
-                  <select
-                    value={state}
-                    onChange={e => setState(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-purple-400/50"
-                  >
-                    <option value="GA">Georgia</option>
-                    <option value="AZ">Arizona</option>
-                    <option value="PA">Pennsylvania</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setShowForm(false)}
-                  className="flex-1 py-3 bg-white/5 text-white/60 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || !title.trim() || !description.trim()}
-                  className="flex-1 py-3 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-400 transition-colors disabled:opacity-50"
-                >
-                  {submitting ? "Submitting..." : "Submit Issue"}
-                </button>
-              </div>
-            </div>
-          </div>
+          <button onClick={() => { setStep("select"); setResults(null); setPriorities([]); }}
+            className="px-4 py-2 rounded-lg border border-white/20 text-white/60 text-sm">Start Over</button>
         </div>
       )}
     </div>

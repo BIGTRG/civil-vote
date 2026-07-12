@@ -26,6 +26,18 @@ import {
   MapsPage,
   CanvassingPage,
   PaymentsPage,
+  VoterRegPage,
+  TextBankingPage,
+  EmailCampaignsPage,
+  DataExportPage,
+  ABTestingPage,
+  PushNotificationsPage,
+  AccessibilityPage,
+  ApiDocsPage,
+  CommunityPage,
+  ComparePage,
+  VolunteerPage,
+  NotificationsPage,
 } from "@/pages";
 import { PublicLandingPage } from "@/pages/PublicLandingPage";
 import { convex } from "../convexClient";
@@ -64,6 +76,13 @@ export function SpaceAuthAppRoutes() {
             <Route path="/community" element={<CommunityPage />} />
             <Route path="/compare" element={<ComparePage />} />
             <Route path="/volunteers" element={<VolunteerPage />} />
+          <Route path="/voter-reg" element={<VoterRegPage />} />
+          <Route path="/text-banking" element={<TextBankingPage />} />
+          <Route path="/email-campaigns" element={<EmailCampaignsPage />} />
+          <Route path="/data-export" element={<DataExportPage />} />
+          <Route path="/ab-testing" element={<ABTestingPage />} />
+          <Route path="/push-notifications" element={<PushNotificationsPage />} />
+          <Route path="/accessibility" element={<AccessibilityPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 

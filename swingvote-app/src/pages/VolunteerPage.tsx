@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Users, MapPin, Calendar, Clock, Award, Phone, Mail, ChevronRight, Search, Filter, Plus, Heart } from "lucide-react";
+import { Users, Clock, MapPin, Phone, Search, Calendar, Heart } from "lucide-react";
+
 
 interface Volunteer {
   id: string;
