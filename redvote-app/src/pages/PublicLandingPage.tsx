@@ -38,8 +38,8 @@ export function PublicLandingPage() {
           {[
             { value: "4,243", label: "Patriots Pledged" },
             { value: "$73,940", label: "Total Pledged" },
-            { value: "38", label: "States Covered" },
-            { value: "52", label: "Active Races" },
+            { value: "48", label: "States Covered" },
+            { value: "179", label: "Active Races" },
           ].map((s) => (
             <div key={s.label} className="bg-white/5 border border-red-500/10 rounded-xl px-4 py-4">
               <div className="text-2xl font-bold text-red-400">{s.value}</div>
