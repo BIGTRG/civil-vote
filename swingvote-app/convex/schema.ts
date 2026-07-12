@@ -58,7 +58,7 @@ const schema = defineSchema({
     .index("by_candidate", ["candidateId"])
     .index("by_voter_race", ["oderId", "raceId"]),
 
-  // Candidate promises (Promise Ledger)
+  // Candidate promises
   promises: defineTable({
     candidateId: v.id("candidates"),
     raceId: v.id("races"),
@@ -78,7 +78,7 @@ const schema = defineSchema({
     .index("by_race", ["raceId"])
     .index("by_status", ["status"]),
 
-  // Voter issues (Win My Vote)
+  // Voter issues
   voterIssues: defineTable({
     oderId: v.optional(v.id("users")),
     title: v.string(),
@@ -126,7 +126,7 @@ const schema = defineSchema({
     .index("by_type", ["type"])
     .index("by_created", ["createdAt"]),
 
-  // Merch store products
+  // Merch store
   products: defineTable({
     name: v.string(),
     description: v.string(),
@@ -148,7 +148,6 @@ const schema = defineSchema({
   })
     .index("by_category", ["category"])
     .index("by_featured", ["featured"]),
-
 
   // Party organizations directory
   partyOrganizations: defineTable({
@@ -178,7 +177,7 @@ const schema = defineSchema({
     .index("by_session", ["sessionId"])
     .index("by_product", ["productId"]),
 
-  // Polling data snapshots
+  // Polling data
   pollingData: defineTable({
     raceId: v.id("races"),
     pollster: v.string(),
@@ -196,7 +195,7 @@ const schema = defineSchema({
     .index("by_race", ["raceId"])
     .index("by_date", ["date"]),
 
-  // Race ratings from Cook/Sabato/etc
+  // Race ratings
   raceRatings: defineTable({
     raceTitle: v.string(),
     state: v.string(),
@@ -208,6 +207,154 @@ const schema = defineSchema({
   })
     .index("by_state", ["state"])
     .index("by_rating", ["rating"]),
+
+  // ======== NEW TABLES ========
+
+  // News articles from feeds and scrapers
+  newsArticles: defineTable({
+    title: v.string(),
+    summary: v.string(),
+    source: v.string(),
+    url: v.string(),
+    imageUrl: v.optional(v.string()),
+    publishedAt: v.string(),
+    category: v.union(
+      v.literal("national"),
+      v.literal("state"),
+      v.literal("local"),
+      v.literal("policy"),
+      v.literal("campaign"),
+      v.literal("opinion")
+    ),
+    state: v.optional(v.string()),
+    relatedRaceIds: v.optional(v.array(v.string())),
+    tags: v.optional(v.array(v.string())),
+    sentiment: v.optional(v.union(v.literal("positive"), v.literal("negative"), v.literal("neutral"))),
+  })
+    .index("by_category", ["category"])
+    .index("by_state", ["state"])
+    .index("by_published", ["publishedAt"]),
+
+  // Canvassing activities
+  canvassingTurf: defineTable({
+    name: v.string(),
+    state: v.string(),
+    county: v.optional(v.string()),
+    district: v.optional(v.string()),
+    assignedTo: v.optional(v.string()),
+    totalDoors: v.number(),
+    doorsKnocked: v.number(),
+    positiveContacts: v.number(),
+    negativeContacts: v.number(),
+    notHome: v.number(),
+    status: v.union(v.literal("unassigned"), v.literal("in_progress"), v.literal("completed")),
+    lastUpdated: v.string(),
+    lat: v.optional(v.number()),
+    lng: v.optional(v.number()),
+    zipCodes: v.optional(v.array(v.string())),
+  })
+    .index("by_state", ["state"])
+    .index("by_status", ["status"]),
+
+  // Canvassing door records
+  doorRecords: defineTable({
+    turfId: v.id("canvassingTurf"),
+    address: v.string(),
+    voterName: v.optional(v.string()),
+    result: v.union(
+      v.literal("strong_support"),
+      v.literal("lean_support"),
+      v.literal("undecided"),
+      v.literal("lean_oppose"),
+      v.literal("strong_oppose"),
+      v.literal("not_home"),
+      v.literal("refused")
+    ),
+    notes: v.optional(v.string()),
+    canvasserName: v.string(),
+    knockedAt: v.string(),
+    issuesConcerned: v.optional(v.array(v.string())),
+  })
+    .index("by_turf", ["turfId"])
+    .index("by_result", ["result"]),
+
+  // Notifications
+  notifications: defineTable({
+    userId: v.optional(v.id("users")),
+    title: v.string(),
+    message: v.string(),
+    type: v.union(
+      v.literal("race_update"),
+      v.literal("poll_result"),
+      v.literal("finance_update"),
+      v.literal("campaign_news"),
+      v.literal("system")
+    ),
+    read: v.boolean(),
+    actionUrl: v.optional(v.string()),
+    createdAt: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_read", ["read"])
+    .index("by_type", ["type"]),
+
+  // Civic info from Google Civic API
+  civicInfo: defineTable({
+    state: v.string(),
+    type: v.union(
+      v.literal("polling_location"),
+      v.literal("early_voting"),
+      v.literal("election_official"),
+      v.literal("ballot_measure")
+    ),
+    name: v.string(),
+    address: v.optional(v.string()),
+    hours: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    url: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    lastUpdated: v.string(),
+  })
+    .index("by_state", ["state"])
+    .index("by_type", ["type"]),
+
+  // Donations / payment tracking
+  donations: defineTable({
+    userId: v.optional(v.id("users")),
+    email: v.optional(v.string()),
+    candidateId: v.optional(v.id("candidates")),
+    raceId: v.optional(v.id("races")),
+    amount: v.number(),
+    platform: v.union(v.literal("stripe"), v.literal("actblue"), v.literal("winred"), v.literal("manual")),
+    status: v.union(v.literal("pending"), v.literal("completed"), v.literal("refunded"), v.literal("failed")),
+    transactionId: v.optional(v.string()),
+    donorName: v.optional(v.string()),
+    recurring: v.boolean(),
+    createdAt: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_candidate", ["candidateId"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"]),
+
+  // Voter match scores (AI matching)
+  voterMatches: defineTable({
+    userId: v.optional(v.id("users")),
+    sessionId: v.optional(v.string()),
+    candidateId: v.id("candidates"),
+    raceId: v.id("races"),
+    matchScore: v.number(),
+    matchBreakdown: v.array(v.object({
+      issue: v.string(),
+      alignment: v.union(v.literal("strong_match"), v.literal("partial_match"), v.literal("mismatch")),
+      weight: v.number(),
+    })),
+    createdAt: v.string(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_candidate", ["candidateId"])
+    .index("by_score", ["matchScore"]),
 });
 
 export default schema;

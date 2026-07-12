@@ -1,5 +1,5 @@
 
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 // Get polling data for a race
@@ -61,5 +61,72 @@ export const getTopFundraisers = query({
         totalSpent: (c as any).totalSpent ?? null,
         cashOnHand: (c as any).cashOnHand ?? null,
       }));
+  },
+});
+
+// Add a race rating
+export const addRaceRating = mutation({
+  args: {
+    raceTitle: v.string(),
+    state: v.string(),
+    office: v.string(),
+    rating: v.string(),
+    source: v.string(),
+    previousRating: v.optional(v.string()),
+    lastUpdated: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Upsert: check if rating already exists for this race+source
+    const existing = await ctx.db.query("raceRatings").collect();
+    const match = existing.find(r => r.raceTitle === args.raceTitle && r.source === args.source);
+    if (match) {
+      await ctx.db.patch(match._id, {
+        rating: args.rating,
+        previousRating: match.rating,
+        lastUpdated: args.lastUpdated,
+      });
+      return match._id;
+    }
+    return await ctx.db.insert("raceRatings", args);
+  },
+});
+
+// Add polling data
+export const addPollingData = mutation({
+  args: {
+    raceName: v.string(),
+    state: v.string(),
+    pollster: v.string(),
+    date: v.string(),
+    candidate1: v.string(),
+    candidate1Pct: v.number(),
+    candidate2: v.string(),
+    candidate2Pct: v.number(),
+    margin: v.string(),
+    sampleSize: v.number(),
+    marginOfError: v.number(),
+    source: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Find the race by name
+    const races = await ctx.db.query("races").collect();
+    const race = races.find(r => {
+      const rTitle = (r.title || "").toLowerCase();
+      const searchName = args.raceName.toLowerCase();
+      return rTitle.includes(searchName) || searchName.includes(r.state.toLowerCase());
+    });
+
+    return await ctx.db.insert("pollingData", {
+      raceId: race ? race._id : races[0]._id,
+      pollster: args.pollster,
+      date: args.date,
+      sampleSize: args.sampleSize,
+      margin: args.margin,
+      results: [
+        { candidateName: args.candidate1, party: args.candidate1.includes("(D)") ? "Democrat" : "Republican", percentage: args.candidate1Pct },
+        { candidateName: args.candidate2, party: args.candidate2.includes("(R)") ? "Republican" : "Democrat", percentage: args.candidate2Pct },
+      ],
+      source: args.source,
+    });
   },
 });

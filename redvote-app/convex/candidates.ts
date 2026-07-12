@@ -1,4 +1,4 @@
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
 export const list = query({
@@ -44,5 +44,27 @@ export const get = query({
       .withIndex("by_candidate", q => q.eq("candidateId", args.id))
       .collect();
     return { ...candidate, race, promises };
+  },
+});
+
+export const updateFinance = mutation({
+  args: {
+    candidateName: v.string(),
+    totalRaised: v.optional(v.number()),
+    totalSpent: v.optional(v.number()),
+    cashOnHand: v.optional(v.number()),
+    fecCandidateId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const candidates = await ctx.db.query("candidates").collect();
+    const match = candidates.find(c => c.name.toLowerCase() === args.candidateName.toLowerCase());
+    if (!match) return { updated: false, reason: "Candidate not found: " + args.candidateName };
+    const updates: Record<string, any> = {};
+    if (args.totalRaised !== undefined) updates.totalRaised = args.totalRaised;
+    if (args.totalSpent !== undefined) updates.totalSpent = args.totalSpent;
+    if (args.cashOnHand !== undefined) updates.cashOnHand = args.cashOnHand;
+    if (args.fecCandidateId !== undefined) updates.fecCandidateId = args.fecCandidateId;
+    await ctx.db.patch(match._id, updates);
+    return { updated: true, name: match.name };
   },
 });
