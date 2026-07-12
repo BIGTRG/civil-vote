@@ -17,6 +17,7 @@ import {
   IssuesPage,
   AnalyticsPage,
   FundingPage,
+  OperationsPage,
 } from "@/pages";
 import { convex } from "../convexClient";
 
@@ -42,6 +43,7 @@ export function SpaceAuthAppRoutes() {
             <Route path="/issues" element={<IssuesPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/funding" element={<FundingPage />} />
+            <Route path="/operations" element={<OperationsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>

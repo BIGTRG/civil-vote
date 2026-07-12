@@ -42,6 +42,7 @@ import {
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/operations", label: "Operations", icon: Shield },
 ];
 
 const manageNav = [
